@@ -4,13 +4,6 @@ A calendar API in C# / ASP.NET Core (.NET 10). Users have calendars with events.
 daily or weekly and can book shared resources such as meeting rooms. A room can't be double-booked,
 even from another person's calendar.
 
-The assignment was built in four steps (one commit each, see `git log`), followed by this reflection:
-
-1. CRUD for events, stored in a database
-2. Multiple calendars, one per user
-3. Recurring events (daily / weekly)
-4. Resources (meeting rooms) that are busy across calendars
-5. Product and technical direction (this README)
 
 ## Running it
 
