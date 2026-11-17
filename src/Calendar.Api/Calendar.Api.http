@@ -1,0 +1,32 @@
+@host = http://localhost:5055
+
+### Create an event
+# @name created
+POST {{host}}/api/events
+Content-Type: application/json
+
+{
+  "title": "Standup",
+  "description": "Daily sync",
+  "startDate": "2026-11-18T09:00:00+01:00",
+  "endDate": "2026-11-18T09:15:00+01:00"
+}
+
+### List events in a range
+GET {{host}}/api/events?from=2026-11-18T00:00:00Z&to=2026-11-19T00:00:00Z
+
+### Get one event
+GET {{host}}/api/events/{{created.response.body.$.id}}
+
+### Update an event
+PUT {{host}}/api/events/{{created.response.body.$.id}}
+Content-Type: application/json
+
+{
+  "title": "Standup (moved)",
+  "startDate": "2026-11-18T10:00:00+01:00",
+  "endDate": "2026-11-18T10:15:00+01:00"
+}
+
+### Delete an event
+DELETE {{host}}/api/events/{{created.response.body.$.id}}

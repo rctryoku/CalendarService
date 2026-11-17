@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Calendar.Api/Calendar.Api.csproj" />
+    <Project Path="src/Calendar.Application/Calendar.Application.csproj" />
+    <Project Path="src/Calendar.Core/Calendar.Core.csproj" />
+    <Project Path="src/Calendar.Data/Calendar.Data.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Calendar.IntegrationTests/Calendar.IntegrationTests.csproj" />
+    <Project Path="tests/Calendar.UnitTests/Calendar.UnitTests.csproj" />
+  </Folder>
+</Solution>
