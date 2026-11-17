@@ -55,9 +55,7 @@ An event with a weekly recurrence that books a room:
   `count` the event repeats forever.
 - Listing events needs a time range (`from`, `to`, at most 366 days) and returns **occurrences**: a
   weekly meeting appears once per week, each with the id of the event it belongs to.
-- Errors are [RFC 7807](https://www.rfc-editor.org/rfc/rfc7807) problem details:
-  **400** for invalid input (with a list of errors), **404** for unknown ids, and **409** when a
-  resource is already booked, e.g. `'Room 1' is already booked by 'Planning' at 2026-12-09 12:00:00Z.`
+
 
 ## Architecture
 
