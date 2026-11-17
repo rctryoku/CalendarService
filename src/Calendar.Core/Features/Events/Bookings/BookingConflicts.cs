@@ -4,8 +4,7 @@ namespace Calendar.Core.Features.Events.Bookings;
 
 public static class BookingConflicts
 {
-    /// <summary>How far ahead a series without a count is checked for conflicts.</summary>
-    public static readonly TimeSpan OpenEndedHorizon = TimeSpan.FromDays(366);
+    public static readonly TimeSpan EndlessSeriesHorizon = TimeSpan.FromDays(366);
 
     public static (DateTime Start, DateTime End) CheckWindow(CalendarEvent calendarEvent)
     {
@@ -14,32 +13,33 @@ public static class BookingConflicts
         return (calendarEvent.StartDate, SeriesEnd(calendarEvent));
     }
 
-    /// <summary>The first occurrence of another event that books one of the same resources at an overlapping time.</summary>
     public static BookingConflict? FindFirst(CalendarEvent calendarEvent, IEnumerable<CalendarEvent> otherEvents)
     {
         var (start, end) = CheckWindow(calendarEvent);
         var competitors = otherEvents
-            .Where(other => other.Id != calendarEvent.Id && SharedResource(calendarEvent, other) is not null)
+            .Where(other => other.Id != calendarEvent.Id && SharesResource(calendarEvent, other))
             .ToList();
 
         return EventOccurrences.Between(calendarEvent, start, end)
-            .SelectMany(occurrence => ClashesWith(occurrence, competitors))
+            .SelectMany(occurrence => competitors.SelectMany(competitor => Clashes(occurrence, competitor)))
             .FirstOrDefault();
     }
 
-    private static IEnumerable<BookingConflict> ClashesWith(EventOccurrence occurrence, List<CalendarEvent> competitors) =>
-        competitors.SelectMany(competitor => EventOccurrences
-            .Between(competitor, occurrence.StartDate, occurrence.EndDate)
+    private static IEnumerable<BookingConflict> Clashes(EventOccurrence occurrence, CalendarEvent competitor) =>
+        EventOccurrences.Between(competitor, occurrence.StartDate, occurrence.EndDate)
             .Select(clash => new BookingConflict(
-                competitor, SharedResource(occurrence.CalendarEvent, competitor)!.Value, clash.StartDate)));
+                competitor, SharedResource(occurrence.CalendarEvent, competitor), clash.StartDate));
 
-    private static Guid? SharedResource(CalendarEvent calendarEvent, CalendarEvent other) =>
-        calendarEvent.ResourceIds.Intersect(other.ResourceIds).Select(id => (Guid?)id).FirstOrDefault();
+    private static bool SharesResource(CalendarEvent calendarEvent, CalendarEvent other) =>
+        calendarEvent.ResourceIds.Intersect(other.ResourceIds).Any();
+
+    private static Guid SharedResource(CalendarEvent calendarEvent, CalendarEvent other) =>
+        calendarEvent.ResourceIds.Intersect(other.ResourceIds).First();
 
     private static DateTime SeriesEnd(CalendarEvent calendarEvent) => calendarEvent.Recurrence switch
     {
         null => calendarEvent.EndDate,
         { Count: { } count } rule => calendarEvent.EndDate + TimeSpan.FromTicks(rule.Step.Ticks * (count - 1)),
-        _ => calendarEvent.StartDate + OpenEndedHorizon,
+        _ => calendarEvent.StartDate + EndlessSeriesHorizon,
     };
 }

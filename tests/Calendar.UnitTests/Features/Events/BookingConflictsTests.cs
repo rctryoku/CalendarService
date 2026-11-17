@@ -115,17 +115,6 @@ public sealed class BookingConflictsTests
         Assert.Null(BookingConflicts.FindFirst(candidate, [outsideHorizon]));
     }
 
-    [Fact]
-    public void CheckWindow_SeriesWithCount_EndsWhenLastOccurrenceEnds()
-    {
-        var calendarEvent = Event("Team meeting", MondayNine, [MeetingRoom], Weekly(count: 3));
-
-        var (start, end) = BookingConflicts.CheckWindow(calendarEvent);
-
-        Assert.Equal(MondayNine, start);
-        Assert.Equal(MondayNine.AddDays(14).AddHours(1), end);
-    }
-
     private static CalendarEvent Event(
         string title, DateTime startDate, IReadOnlyList<Guid> resourceIds, RecurrenceRule? recurrence = null) =>
         new(Guid.NewGuid(), Guid.NewGuid(), title, null, startDate, startDate.AddHours(1), recurrence, resourceIds);

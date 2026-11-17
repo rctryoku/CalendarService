@@ -1,6 +1,7 @@
 using Calendar.Core.Features.Events;
 using Calendar.Core.Features.Events.Bookings;
 using Calendar.Core.Features.Resources;
+using Calendar.Data.TypeHandlers;
 using Dapper;
 
 namespace Calendar.Data.Features.Events.Bookings;
@@ -22,7 +23,7 @@ internal sealed class ResourceBookingRepository(SqliteConnectionFactory connecti
 
         await using var connection = await connectionFactory.OpenAsync(cancellationToken);
         var resources = await connection.QueryAsync<Resource>(new CommandDefinition(
-            sql, new { ResourceIds = AsText(resourceIds) }, cancellationToken: cancellationToken));
+            sql, new { ResourceIds = GuidList.AsText(resourceIds) }, cancellationToken: cancellationToken));
         return [.. resources];
     }
 
@@ -59,7 +60,7 @@ internal sealed class ResourceBookingRepository(SqliteConnectionFactory connecti
             sql,
             new
             {
-                ResourceIds = AsText(resourceIds),
+                ResourceIds = GuidList.AsText(resourceIds),
                 ExcludeEventId = excludeEventId,
                 RangeStart = rangeStart,
                 RangeEnd = rangeEnd,
@@ -67,7 +68,4 @@ internal sealed class ResourceBookingRepository(SqliteConnectionFactory connecti
             cancellationToken: cancellationToken));
         return await EventResourceLinks.WithResourcesAsync(connection, rows, cancellationToken);
     }
-
-    // Dapper's list expansion skips type handlers, so the ids are passed as the text they are stored as.
-    private static IEnumerable<string> AsText(IEnumerable<Guid> ids) => ids.Select(id => id.ToString());
 }

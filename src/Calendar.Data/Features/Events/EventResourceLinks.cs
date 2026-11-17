@@ -1,5 +1,6 @@
 using System.Data;
 using Calendar.Core.Features.Events;
+using Calendar.Data.TypeHandlers;
 using Dapper;
 
 namespace Calendar.Data.Features.Events;
@@ -65,9 +66,8 @@ internal static class EventResourceLinks
                 ResourceId
             """;
 
-        // Dapper's list expansion skips type handlers, so the ids are passed as the text they are stored as.
         var links = await connection.QueryAsync<EventResourceLinkRow>(new CommandDefinition(
-            sql, new { EventIds = eventIds.Select(id => id.ToString()) }, cancellationToken: cancellationToken));
+            sql, new { EventIds = GuidList.AsText(eventIds) }, cancellationToken: cancellationToken));
         return links.ToLookup(link => link.EventId, link => link.ResourceId);
     }
 

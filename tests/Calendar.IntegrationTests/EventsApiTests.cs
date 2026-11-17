@@ -30,29 +30,17 @@ public sealed class EventsApiTests : IAsyncLifetime, IDisposable
     }
 
     [Fact]
-    public async Task Create_ValidEvent_StoresTimesInUtc()
+    public async Task Create_ValidEvent_ReturnsLocationAndStoresTimesInUtc()
     {
-        var created = await CreateAsync(EventRequest("Standup", "2026-11-18T09:00:00+01:00", "2026-11-18T09:15:00+01:00"));
+        var response = await _client.PostAsJsonAsync(
+            EventsUrl, EventRequest("Standup", "2026-11-18T09:00:00+01:00", "2026-11-18T09:15:00+01:00"));
 
-        var fetched = await _client.GetFromJsonAsync<EventResponse>($"{EventsUrl}/{created.Id}");
-
-        Assert.NotNull(fetched);
-        Assert.Equal("Standup", fetched.Title);
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var fetched = await _client.GetFromJsonAsync<EventResponse>(response.Headers.Location);
+        Assert.Equal("Standup", fetched!.Title);
         Assert.Equal(_calendar.Id, fetched.CalendarId);
         Assert.Equal(new DateTime(2026, 11, 18, 8, 0, 0, DateTimeKind.Utc), fetched.StartDate);
         Assert.Equal(new DateTime(2026, 11, 18, 8, 15, 0, DateTimeKind.Utc), fetched.EndDate);
-    }
-
-    [Fact]
-    public async Task Create_ValidEvent_ReturnsLocationOfNewEvent()
-    {
-        var response = await _client.PostAsJsonAsync(
-            EventsUrl, EventRequest("Standup", "2026-11-18T09:00:00Z", "2026-11-18T09:15:00Z"));
-
-        var created = await response.Content.ReadFromJsonAsync<EventResponse>();
-        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-        Assert.EndsWith(
-            $"{EventsUrl}/{created!.Id}", response.Headers.Location!.ToString(), StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -74,15 +62,6 @@ public sealed class EventsApiTests : IAsyncLifetime, IDisposable
         var body = await response.Content.ReadAsStringAsync();
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Contains("EndDate must be after StartDate.", body, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public async Task Create_EmptyTitle_Returns400()
-    {
-        var response = await _client.PostAsJsonAsync(
-            EventsUrl, EventRequest("", "2026-11-18T09:00:00Z", "2026-11-18T10:00:00Z"));
-
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact]

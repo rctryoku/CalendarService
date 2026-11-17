@@ -80,7 +80,7 @@ Resources (`Resource`, e.g. meeting rooms) are global, not owned by a calendar (
 books them through `ResourceIds` (link table `EventResources`). Create and Update event call
 `EnsureResourcesAreFreeAsync`, which loads other bookings of the same resources in **any** calendar
 (`IResourceBookingRepository`) and runs the pure `BookingConflicts.FindFirst`; a clash throws
-`ConflictException` (409). The check covers the event's whole series, or `BookingConflicts.OpenEndedHorizon`
+`ConflictException` (409). The check covers the event's whole series, or `BookingConflicts.EndlessSeriesHorizon`
 (366 days) for a series without a count.
 
 ### Layer rules
@@ -116,7 +116,7 @@ books them through `ResourceIds` (link table `EventResources`). Create and Updat
 ### SQL style
 
 Keywords in title case, each clause on its own line, one column per line, indented four spaces.
-Queries live as `const string sql = """..."""` inside the repository method that uses them.
+Queries live as `var sql = """..."""` inside the method that uses them.
 
 ```sql
 Select

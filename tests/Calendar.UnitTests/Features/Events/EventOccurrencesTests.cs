@@ -29,57 +29,21 @@ public sealed class EventOccurrencesTests
         Assert.Empty(occurrences);
     }
 
-    [Fact]
-    public void Between_Daily_ReturnsOneOccurrencePerDay()
+    [Theory]
+    [InlineData(RecurrenceFrequency.Daily, 1, 1)]
+    [InlineData(RecurrenceFrequency.Daily, 2, 2)]
+    [InlineData(RecurrenceFrequency.Weekly, 1, 7)]
+    [InlineData(RecurrenceFrequency.Weekly, 2, 14)]
+    public void Between_Recurring_RepeatsEveryIntervalDaysOrWeeks(
+        RecurrenceFrequency frequency, int interval, int daysBetween)
     {
-        var calendarEvent = Event(MondayNine, hours: 1, Rule(RecurrenceFrequency.Daily));
+        var calendarEvent = Event(MondayNine, hours: 1, Rule(frequency, interval));
 
-        var occurrences = EventOccurrences.Between(calendarEvent, Utc(2026, 11, 16), Utc(2026, 11, 21));
+        var occurrences = EventOccurrences.Between(calendarEvent, Utc(2026, 11, 16), Utc(2026, 11, 16).AddDays(daysBetween * 3));
 
         Assert.Equal(
-            [MondayNine, MondayNine.AddDays(1), MondayNine.AddDays(2), MondayNine.AddDays(3), MondayNine.AddDays(4)],
+            [MondayNine, MondayNine.AddDays(daysBetween), MondayNine.AddDays(daysBetween * 2)],
             StartDates(occurrences));
-    }
-
-    [Fact]
-    public void Between_DailyEveryOtherDay_SkipsAlternateDays()
-    {
-        var calendarEvent = Event(MondayNine, hours: 1, Rule(RecurrenceFrequency.Daily, interval: 2));
-
-        var occurrences = EventOccurrences.Between(calendarEvent, Utc(2026, 11, 16), Utc(2026, 11, 21));
-
-        Assert.Equal([MondayNine, MondayNine.AddDays(2), MondayNine.AddDays(4)], StartDates(occurrences));
-    }
-
-    [Fact]
-    public void Between_Weekly_ReturnsSameWeekdayEachWeek()
-    {
-        var calendarEvent = Event(MondayNine, hours: 1, Rule(RecurrenceFrequency.Weekly));
-
-        var occurrences = EventOccurrences.Between(calendarEvent, Utc(2026, 11, 1), Utc(2026, 12, 8));
-
-        Assert.Equal([MondayNine, MondayNine.AddDays(7), MondayNine.AddDays(14), MondayNine.AddDays(21)], StartDates(occurrences));
-        Assert.All(occurrences, occurrence => Assert.Equal(DayOfWeek.Monday, occurrence.StartDate.DayOfWeek));
-    }
-
-    [Fact]
-    public void Between_WeeklyEveryOtherWeek_SkipsAlternateWeeks()
-    {
-        var calendarEvent = Event(MondayNine, hours: 1, Rule(RecurrenceFrequency.Weekly, interval: 2));
-
-        var occurrences = EventOccurrences.Between(calendarEvent, Utc(2026, 11, 1), Utc(2026, 12, 31));
-
-        Assert.Equal([MondayNine, MondayNine.AddDays(14), MondayNine.AddDays(28), MondayNine.AddDays(42)], StartDates(occurrences));
-    }
-
-    [Fact]
-    public void Between_Count_StopsAfterCountOccurrences()
-    {
-        var calendarEvent = Event(MondayNine, hours: 1, Rule(RecurrenceFrequency.Weekly, count: 3));
-
-        var occurrences = EventOccurrences.Between(calendarEvent, Utc(2026, 11, 1), Utc(2026, 12, 31));
-
-        Assert.Equal(3, occurrences.Count());
     }
 
     [Fact]

@@ -22,18 +22,17 @@ public sealed class ResourcesApiTests : IDisposable
     }
 
     [Fact]
-    public async Task Create_ValidResource_ReturnsCreatedWithLocation()
+    public async Task Create_ValidResource_ReturnsLocationAndCanBeFetched()
     {
         var response = await _client.PostAsJsonAsync("/api/resources", new CreateResourceRequest { Name = "Room 1" });
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-        var created = await response.Content.ReadFromJsonAsync<ResourceResponse>();
-        Assert.Equal("Room 1", created!.Name);
-        Assert.Equal($"/api/resources/{created.Id}", response.Headers.Location!.ToString());
+        var fetched = await _client.GetFromJsonAsync<ResourceResponse>(response.Headers.Location);
+        Assert.Equal("Room 1", fetched!.Name);
     }
 
     [Fact]
-    public async Task Create_EmptyName_ReturnsBadRequest()
+    public async Task Create_EmptyName_Returns400()
     {
         var response = await _client.PostAsJsonAsync("/api/resources", new CreateResourceRequest { Name = "" });
 
@@ -84,7 +83,7 @@ public sealed class ResourcesApiTests : IDisposable
     [InlineData("GET")]
     [InlineData("PUT")]
     [InlineData("DELETE")]
-    public async Task UnknownResource_ReturnsNotFound(string method)
+    public async Task AnyMethod_UnknownId_Returns404(string method)
     {
         var url = $"/api/resources/{Guid.NewGuid()}";
 

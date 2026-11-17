@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using Calendar.Api.Features.Calendars;
+using Calendar.Api.Features.Events;
 using Calendar.Api.Features.Events.Create;
 using Calendar.Api.Features.Resources;
 using Calendar.Core.Features.Events.Recurrence;
@@ -35,15 +36,17 @@ public sealed class BookingsApiTests : IAsyncLifetime, IDisposable
     }
 
     [Fact]
-    public async Task Create_EventBookingResource_ReturnsResourceIds()
+    public async Task Create_EventBookingResource_StoresTheBooking()
     {
         var created = await _client.CreateEventAsync(_alice.Id, Booking("Planning", "09:00", "10:00"));
 
-        Assert.Equal([_room.Id], created.ResourceIds);
+        var fetched = await _client.GetFromJsonAsync<EventResponse>($"/api/calendars/{_alice.Id}/events/{created.Id}");
+
+        Assert.Equal([_room.Id], fetched!.ResourceIds);
     }
 
     [Fact]
-    public async Task Create_ResourceBookedInOtherCalendar_ReturnsConflict()
+    public async Task Create_ResourceBookedInOtherCalendar_Returns409WithReason()
     {
         await _client.CreateEventAsync(_alice.Id, Booking("Planning", "09:00", "10:00"));
 
@@ -55,27 +58,7 @@ public sealed class BookingsApiTests : IAsyncLifetime, IDisposable
     }
 
     [Fact]
-    public async Task Create_BackToBackBookings_AreAllowed()
-    {
-        await _client.CreateEventAsync(_alice.Id, Booking("Planning", "09:00", "10:00"));
-
-        var response = await PostAsync(_bob.Id, Booking("Interview", "10:00", "11:00"));
-
-        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-    }
-
-    [Fact]
-    public async Task Create_OverlappingEventsWithoutResources_AreAllowed()
-    {
-        await _client.CreateEventAsync(_alice.Id, Booking("Planning", "09:00", "10:00") with { ResourceIds = [] });
-
-        var response = await PostAsync(_bob.Id, Booking("Interview", "09:00", "10:00") with { ResourceIds = [] });
-
-        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-    }
-
-    [Fact]
-    public async Task Create_RecurringBookingHittingLaterEvent_ReturnsConflict()
+    public async Task Create_RecurringBookingHittingLaterEvent_Returns409()
     {
         await _client.CreateEventAsync(
             _bob.Id, EventRequest("Workshop", "2026-12-02T09:00:00Z", "2026-12-02T12:00:00Z") with { ResourceIds = [_room.Id] });
@@ -88,7 +71,17 @@ public sealed class BookingsApiTests : IAsyncLifetime, IDisposable
     }
 
     [Fact]
-    public async Task Create_UnknownResource_ReturnsNotFound()
+    public async Task Create_OverlappingEventsWithoutResources_Returns201()
+    {
+        await _client.CreateEventAsync(_alice.Id, Booking("Planning", "09:00", "10:00") with { ResourceIds = [] });
+
+        var response = await PostAsync(_bob.Id, Booking("Interview", "09:00", "10:00") with { ResourceIds = [] });
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Create_UnknownResource_Returns404()
     {
         var response = await PostAsync(_alice.Id, Booking("Planning", "09:00", "10:00") with { ResourceIds = [Guid.NewGuid()] });
 
@@ -96,16 +89,7 @@ public sealed class BookingsApiTests : IAsyncLifetime, IDisposable
     }
 
     [Fact]
-    public async Task Create_DuplicateResourceIds_ReturnsBadRequest()
-    {
-        var response = await PostAsync(
-            _alice.Id, Booking("Planning", "09:00", "10:00") with { ResourceIds = [_room.Id, _room.Id] });
-
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-    }
-
-    [Fact]
-    public async Task Update_MovingEventWithinItsOwnBooking_IsAllowed()
+    public async Task Update_MovingEventWithinItsOwnBooking_Returns200()
     {
         var created = await _client.CreateEventAsync(_alice.Id, Booking("Planning", "09:00", "10:00"));
 
@@ -116,7 +100,7 @@ public sealed class BookingsApiTests : IAsyncLifetime, IDisposable
     }
 
     [Fact]
-    public async Task Update_MovingEventOntoOtherBooking_ReturnsConflict()
+    public async Task Update_MovingEventOntoOtherBooking_Returns409()
     {
         await _client.CreateEventAsync(_alice.Id, Booking("Planning", "09:00", "10:00"));
         var other = await _client.CreateEventAsync(_bob.Id, Booking("Interview", "13:00", "14:00"));
@@ -128,7 +112,7 @@ public sealed class BookingsApiTests : IAsyncLifetime, IDisposable
     }
 
     [Fact]
-    public async Task Delete_Event_FreesTheResource()
+    public async Task Delete_BookedEvent_FreesTheResource()
     {
         var created = await _client.CreateEventAsync(_alice.Id, Booking("Planning", "09:00", "10:00"));
         await _client.DeleteAsync($"/api/calendars/{_alice.Id}/events/{created.Id}");

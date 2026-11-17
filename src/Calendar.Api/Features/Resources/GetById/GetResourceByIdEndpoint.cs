@@ -1,4 +1,3 @@
-using Calendar.Application.Features.Resources.GetById;
 using FastEndpoints;
 
 namespace Calendar.Api.Features.Resources.GetById;
@@ -13,7 +12,7 @@ public sealed class GetResourceByIdEndpoint : Endpoint<GetResourceByIdRequest, R
 
     public override async Task HandleAsync(GetResourceByIdRequest req, CancellationToken ct)
     {
-        var resource = await new GetResourceByIdQuery(req.Id).ExecuteAsync(ct);
+        var resource = await req.ToQuery().ExecuteAsync(ct);
 
         await Send.OkAsync(ResourceResponse.From(resource), ct);
     }

@@ -2,7 +2,6 @@ namespace Calendar.Core.Features.Events.Recurrence;
 
 public static class EventOccurrences
 {
-    /// <summary>The occurrences of an event that overlap [rangeStart, rangeEnd), in time order.</summary>
     public static IEnumerable<EventOccurrence> Between(CalendarEvent calendarEvent, DateTime rangeStart, DateTime rangeEnd)
     {
         ArgumentNullException.ThrowIfNull(calendarEvent);

@@ -3,52 +3,41 @@ using Dapper;
 
 namespace Calendar.Data;
 
-/// <summary>
-/// Runs the plain SQL scripts in <c>Migrations/</c> in file name order, each exactly once.
-/// Applied scripts are recorded in <c>SchemaVersions</c>.
-/// </summary>
 internal sealed class DatabaseMigrator(SqliteConnectionFactory connectionFactory)
 {
     private const string ResourcePrefix = "Migrations/";
 
-    private const string CreateSchemaVersionsTable = """
-        Create Table If Not Exists SchemaVersions
-        (
-            ScriptName Text Not Null Primary Key,
-            AppliedAt  Text Not Null
-        );
-        """;
-
-    private const string SelectAppliedScripts = """
-        Select
-            ScriptName
-        From
-            SchemaVersions
-        """;
-
-    private const string InsertAppliedScript = """
-        Insert Into SchemaVersions
-        (
-            ScriptName,
-            AppliedAt
-        )
-        Values
-        (
-            @ScriptName,
-            @AppliedAt
-        )
-        """;
-
     public async Task MigrateAsync(CancellationToken cancellationToken)
     {
         await using var connection = await connectionFactory.OpenAsync(cancellationToken);
-        await connection.ExecuteAsync(new CommandDefinition(CreateSchemaVersionsTable, cancellationToken: cancellationToken));
+        var appliedScripts = await AppliedScriptNamesAsync(connection, cancellationToken);
 
-        var appliedScripts = await connection.QueryAsync<string>(
-            new CommandDefinition(SelectAppliedScripts, cancellationToken: cancellationToken));
-
-        foreach (var scriptName in PendingScriptNames(appliedScripts.ToHashSet()))
+        foreach (var scriptName in PendingScriptNames(appliedScripts))
             await ApplyAsync(connection, scriptName, cancellationToken);
+    }
+
+    private static async Task<HashSet<string>> AppliedScriptNamesAsync(
+        DbConnection connection, CancellationToken cancellationToken)
+    {
+        var createSql = """
+            Create Table If Not Exists SchemaVersions
+            (
+                ScriptName Text Not Null Primary Key,
+                AppliedAt  Text Not Null
+            );
+            """;
+
+        var selectSql = """
+            Select
+                ScriptName
+            From
+                SchemaVersions
+            """;
+
+        await connection.ExecuteAsync(new CommandDefinition(createSql, cancellationToken: cancellationToken));
+        var scriptNames = await connection.QueryAsync<string>(
+            new CommandDefinition(selectSql, cancellationToken: cancellationToken));
+        return scriptNames.ToHashSet();
     }
 
     private static IEnumerable<string> PendingScriptNames(HashSet<string> appliedScripts) =>
@@ -61,12 +50,25 @@ internal sealed class DatabaseMigrator(SqliteConnectionFactory connectionFactory
 
     private static async Task ApplyAsync(DbConnection connection, string scriptName, CancellationToken cancellationToken)
     {
+        var sql = """
+            Insert Into SchemaVersions
+            (
+                ScriptName,
+                AppliedAt
+            )
+            Values
+            (
+                @ScriptName,
+                @AppliedAt
+            )
+            """;
+
         var script = await ReadScriptAsync(scriptName, cancellationToken);
 
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
         await connection.ExecuteAsync(new CommandDefinition(script, transaction: transaction, cancellationToken: cancellationToken));
         await connection.ExecuteAsync(new CommandDefinition(
-            InsertAppliedScript,
+            sql,
             new { ScriptName = scriptName, AppliedAt = DateTime.UtcNow },
             transaction,
             cancellationToken: cancellationToken));

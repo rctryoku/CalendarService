@@ -3,7 +3,6 @@ using Calendar.Core.Features.Events.Recurrence;
 
 namespace Calendar.Data.Features.Events;
 
-/// <summary>One row of the Events table, with the recurrence rule flattened into nullable columns.</summary>
 internal sealed class EventRow
 {
     public Guid Id { get; set; }

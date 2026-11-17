@@ -1,4 +1,3 @@
-using Calendar.Application.Features.Calendars.GetById;
 using FastEndpoints;
 
 namespace Calendar.Api.Features.Calendars.GetById;
@@ -13,7 +12,7 @@ public sealed class GetCalendarByIdEndpoint : Endpoint<GetCalendarByIdRequest, C
 
     public override async Task HandleAsync(GetCalendarByIdRequest req, CancellationToken ct)
     {
-        var calendar = await new GetCalendarByIdQuery(req.Id).ExecuteAsync(ct);
+        var calendar = await req.ToQuery().ExecuteAsync(ct);
 
         await Send.OkAsync(CalendarResponse.From(calendar), ct);
     }

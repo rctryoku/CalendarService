@@ -50,21 +50,15 @@ public sealed class EventDetailsValidatorTests
         Assert.Contains(result.Errors, error => error.PropertyName == nameof(IEventDetails.Description));
     }
 
-    [Fact]
-    public void Validate_EndDateBeforeStartDate_HasEndDateError()
+    [Theory]
+    [InlineData(-60)]
+    [InlineData(0)]
+    public void Validate_EndDateNotAfterStartDate_HasEndDateError(int minutesAfterStart)
     {
-        var result = _validator.Validate(Event() with { StartDate = Ten, EndDate = Nine });
+        var result = _validator.Validate(Event() with { EndDate = Nine.AddMinutes(minutesAfterStart) });
 
         var error = Assert.Single(result.Errors);
         Assert.Equal("EndDate must be after StartDate.", error.ErrorMessage);
-    }
-
-    [Fact]
-    public void Validate_EndDateEqualsStartDate_HasEndDateError()
-    {
-        var result = _validator.Validate(Event() with { EndDate = Nine });
-
-        Assert.Contains(result.Errors, error => error.PropertyName == nameof(IEventDetails.EndDate));
     }
 
     [Fact]
@@ -133,6 +127,17 @@ public sealed class EventDetailsValidatorTests
 
         var error = Assert.Single(result.Errors);
         Assert.Equal("Each occurrence must end before the next one starts.", error.ErrorMessage);
+    }
+
+    [Fact]
+    public void Validate_SameResourceTwice_HasError()
+    {
+        var room = Guid.NewGuid();
+
+        var result = _validator.Validate(Event() with { ResourceIds = [room, room] });
+
+        var error = Assert.Single(result.Errors);
+        Assert.Equal("ResourceIds must not contain duplicates.", error.ErrorMessage);
     }
 
     private static RecurrenceRequest Weekly() => new() { Frequency = RecurrenceFrequency.Weekly };
