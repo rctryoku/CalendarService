@@ -63,7 +63,12 @@ Calendar.Core/Features/Events/Create/ICreateEventRepository.cs
 Calendar.Data/Features/Events/Create/CreateEventRepository.cs
 ```
 
-Every use case has the same folder name (`Create`, `Update`, `Delete`, `GetById`, `List`) in every project.
+Every use case has the same folder name (`Create`, `Update`, `Delete`, `GetById`, `List`, or an
+intention-revealing verb such as `Rename`) in every project.
+
+Features so far: `Calendars` (entity `UserCalendar`) and `Events` (entity `CalendarEvent`, always inside a
+calendar: routes are `/api/calendars/{calendarId}/events[/{id}]`). The entity is not called `Calendar`
+because that would clash with the root namespace `Calendar`.
 
 ### Layer rules
 
@@ -85,7 +90,10 @@ Every use case has the same folder name (`Create`, `Update`, `Delete`, `GetById`
 - Every schema change (create/alter table, index) is a plain SQL file in `src/Calendar.Data/Migrations/`,
   named `NNNN_Description.sql` (e.g. `0002_CreateCalendarsTable.sql`). Never put DDL in C#.
 - Scripts must be runnable as-is in any SQLite tool (copy, paste, run). No templating, no C# placeholders.
-- Never edit a script that has been applied; add a new one. `DatabaseMigrator` runs pending scripts in file
+- Never edit a script that has been applied; add a new one. SQLite can't add a required or foreign key column
+  with `Alter Table`, so such changes rebuild the table (see `0003_AddCalendarIdToEvents.sql`).
+- Foreign keys are switched on per connection in `SqliteConnectionFactory`; rely on `On Delete Cascade`
+  rather than deleting child rows by hand. `DatabaseMigrator` runs pending scripts in file
   name order at startup, each in a transaction, and records them in `SchemaVersions`.
 
 ### SQL style

@@ -6,7 +6,7 @@ public sealed class UpdateEventEndpoint : Endpoint<UpdateEventRequest, EventResp
 {
     public override void Configure()
     {
-        Put("/api/events/{id:guid}");
+        Put("/api/calendars/{calendarId:guid}/events/{id:guid}");
         AllowAnonymous();
     }
 

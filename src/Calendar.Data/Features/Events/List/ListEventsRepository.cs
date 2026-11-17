@@ -7,11 +7,12 @@ namespace Calendar.Data.Features.Events.List;
 internal sealed class ListEventsRepository(SqliteConnectionFactory connectionFactory) : IListEventsRepository
 {
     public async Task<IReadOnlyList<CalendarEvent>> ListAsync(
-        DateTime? rangeStart, DateTime? rangeEnd, CancellationToken cancellationToken)
+        Guid calendarId, DateTime? rangeStart, DateTime? rangeEnd, CancellationToken cancellationToken)
     {
         var sql = """
             Select
                 Id,
+                CalendarId,
                 Title,
                 Description,
                 StartDate,
@@ -19,7 +20,8 @@ internal sealed class ListEventsRepository(SqliteConnectionFactory connectionFac
             From
                 Events
             Where
-                (@RangeStart Is Null Or EndDate > @RangeStart)
+                CalendarId = @CalendarId
+                And (@RangeStart Is Null Or EndDate > @RangeStart)
                 And (@RangeEnd Is Null Or StartDate < @RangeEnd)
             Order By
                 StartDate
@@ -27,7 +29,9 @@ internal sealed class ListEventsRepository(SqliteConnectionFactory connectionFac
 
         await using var connection = await connectionFactory.OpenAsync(cancellationToken);
         var events = await connection.QueryAsync<CalendarEvent>(new CommandDefinition(
-            sql, new { RangeStart = rangeStart, RangeEnd = rangeEnd }, cancellationToken: cancellationToken));
+            sql,
+            new { CalendarId = calendarId, RangeStart = rangeStart, RangeEnd = rangeEnd },
+            cancellationToken: cancellationToken));
         return [.. events];
     }
 }

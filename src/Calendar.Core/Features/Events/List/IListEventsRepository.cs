@@ -4,5 +4,5 @@ public interface IListEventsRepository
 {
     /// <summary>Events overlapping [rangeStart, rangeEnd), ordered by start date. A null bound is unbounded.</summary>
     Task<IReadOnlyList<CalendarEvent>> ListAsync(
-        DateTime? rangeStart, DateTime? rangeEnd, CancellationToken cancellationToken);
+        Guid calendarId, DateTime? rangeStart, DateTime? rangeEnd, CancellationToken cancellationToken);
 }

@@ -18,6 +18,7 @@ internal sealed class UpdateEventRepository(SqliteConnectionFactory connectionFa
                 EndDate = @EndDate
             Where
                 Id = @Id
+                And CalendarId = @CalendarId
             """;
 
         await using var connection = await connectionFactory.OpenAsync(cancellationToken);

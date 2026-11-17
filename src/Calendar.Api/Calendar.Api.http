@@ -1,8 +1,29 @@
 @host = http://localhost:5055
 
-### Create an event
+### Create a calendar
+# @name calendar
+POST {{host}}/api/calendars
+Content-Type: application/json
+
+{
+  "name": "Work",
+  "owner": "rene"
+}
+
+### List calendars for an owner
+GET {{host}}/api/calendars?owner=rene
+
+### Rename the calendar
+PUT {{host}}/api/calendars/{{calendar.response.body.$.id}}
+Content-Type: application/json
+
+{
+  "name": "Job"
+}
+
+### Create an event in the calendar
 # @name created
-POST {{host}}/api/events
+POST {{host}}/api/calendars/{{calendar.response.body.$.id}}/events
 Content-Type: application/json
 
 {
@@ -12,14 +33,14 @@ Content-Type: application/json
   "endDate": "2026-11-18T09:15:00+01:00"
 }
 
-### List events in a range
-GET {{host}}/api/events?from=2026-11-18T00:00:00Z&to=2026-11-19T00:00:00Z
+### List events in a time range
+GET {{host}}/api/calendars/{{calendar.response.body.$.id}}/events?from=2026-11-18T00:00:00Z&to=2026-11-19T00:00:00Z
 
-### Get one event
-GET {{host}}/api/events/{{created.response.body.$.id}}
+### Get the event
+GET {{host}}/api/calendars/{{calendar.response.body.$.id}}/events/{{created.response.body.$.id}}
 
-### Update an event
-PUT {{host}}/api/events/{{created.response.body.$.id}}
+### Move the event
+PUT {{host}}/api/calendars/{{calendar.response.body.$.id}}/events/{{created.response.body.$.id}}
 Content-Type: application/json
 
 {
@@ -28,5 +49,8 @@ Content-Type: application/json
   "endDate": "2026-11-18T10:15:00+01:00"
 }
 
-### Delete an event
-DELETE {{host}}/api/events/{{created.response.body.$.id}}
+### Delete the event
+DELETE {{host}}/api/calendars/{{calendar.response.body.$.id}}/events/{{created.response.body.$.id}}
+
+### Delete the calendar (also deletes its events)
+DELETE {{host}}/api/calendars/{{calendar.response.body.$.id}}

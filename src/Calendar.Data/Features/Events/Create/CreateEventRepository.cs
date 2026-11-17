@@ -12,6 +12,7 @@ internal sealed class CreateEventRepository(SqliteConnectionFactory connectionFa
             Insert Into Events
             (
                 Id,
+                CalendarId,
                 Title,
                 Description,
                 StartDate,
@@ -20,6 +21,7 @@ internal sealed class CreateEventRepository(SqliteConnectionFactory connectionFa
             Values
             (
                 @Id,
+                @CalendarId,
                 @Title,
                 @Description,
                 @StartDate,

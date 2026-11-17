@@ -7,7 +7,7 @@ public sealed class CreateEventEndpoint : Endpoint<CreateEventRequest, EventResp
 {
     public override void Configure()
     {
-        Post("/api/events");
+        Post("/api/calendars/{calendarId:guid}/events");
         AllowAnonymous();
     }
 
@@ -16,6 +16,8 @@ public sealed class CreateEventEndpoint : Endpoint<CreateEventRequest, EventResp
         var calendarEvent = await req.ToCommand().ExecuteAsync(ct);
 
         await Send.CreatedAtAsync<GetEventByIdEndpoint>(
-            new { id = calendarEvent.Id }, EventResponse.From(calendarEvent), cancellation: ct);
+            new { calendarId = calendarEvent.CalendarId, id = calendarEvent.Id },
+            EventResponse.From(calendarEvent),
+            cancellation: ct);
     }
 }

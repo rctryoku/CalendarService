@@ -6,7 +6,7 @@ public sealed class ListEventsEndpoint : Endpoint<ListEventsRequest, IReadOnlyLi
 {
     public override void Configure()
     {
-        Get("/api/events");
+        Get("/api/calendars/{calendarId:guid}/events");
         AllowAnonymous();
     }
 

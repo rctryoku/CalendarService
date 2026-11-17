@@ -7,13 +7,13 @@ public sealed class GetEventByIdEndpoint : Endpoint<GetEventByIdRequest, EventRe
 {
     public override void Configure()
     {
-        Get("/api/events/{id:guid}");
+        Get("/api/calendars/{calendarId:guid}/events/{id:guid}");
         AllowAnonymous();
     }
 
     public override async Task HandleAsync(GetEventByIdRequest req, CancellationToken ct)
     {
-        var calendarEvent = await new GetEventByIdQuery(req.Id).ExecuteAsync(ct);
+        var calendarEvent = await new GetEventByIdQuery(req.CalendarId, req.Id).ExecuteAsync(ct);
 
         await Send.OkAsync(EventResponse.From(calendarEvent), ct);
     }

@@ -5,7 +5,7 @@ using FastEndpoints;
 
 namespace Calendar.Application.Features.Events.Delete;
 
-public sealed record DeleteEventCommand(Guid Id) : ICommand;
+public sealed record DeleteEventCommand(Guid CalendarId, Guid Id) : ICommand;
 
 public sealed class DeleteEventCommandHandler(IDeleteEventRepository repository)
     : ICommandHandler<DeleteEventCommand>
@@ -14,7 +14,7 @@ public sealed class DeleteEventCommandHandler(IDeleteEventRepository repository)
     {
         ArgumentNullException.ThrowIfNull(command);
 
-        var deleted = await repository.DeleteAsync(command.Id, ct);
+        var deleted = await repository.DeleteAsync(command.CalendarId, command.Id, ct);
         if (!deleted)
             throw new NotFoundException(nameof(CalendarEvent), command.Id);
     }

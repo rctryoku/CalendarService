@@ -5,8 +5,13 @@ using FastEndpoints;
 
 namespace Calendar.Application.Features.Events.Update;
 
-public sealed record UpdateEventCommand(Guid Id, string Title, string? Description, DateTime StartDate, DateTime EndDate)
-    : ICommand<CalendarEvent>;
+public sealed record UpdateEventCommand(
+    Guid CalendarId,
+    Guid Id,
+    string Title,
+    string? Description,
+    DateTime StartDate,
+    DateTime EndDate) : ICommand<CalendarEvent>;
 
 public sealed class UpdateEventCommandHandler(IUpdateEventRepository repository)
     : ICommandHandler<UpdateEventCommand, CalendarEvent>
@@ -16,7 +21,12 @@ public sealed class UpdateEventCommandHandler(IUpdateEventRepository repository)
         ArgumentNullException.ThrowIfNull(command);
 
         var calendarEvent = new CalendarEvent(
-            command.Id, command.Title, command.Description, command.StartDate, command.EndDate);
+            command.Id,
+            command.CalendarId,
+            command.Title,
+            command.Description,
+            command.StartDate,
+            command.EndDate);
 
         var updated = await repository.UpdateAsync(calendarEvent, ct);
         if (!updated)

@@ -5,7 +5,7 @@ using FastEndpoints;
 
 namespace Calendar.Application.Features.Events.GetById;
 
-public sealed record GetEventByIdQuery(Guid Id) : ICommand<CalendarEvent>;
+public sealed record GetEventByIdQuery(Guid CalendarId, Guid Id) : ICommand<CalendarEvent>;
 
 public sealed class GetEventByIdQueryHandler(IGetEventByIdRepository repository)
     : ICommandHandler<GetEventByIdQuery, CalendarEvent>
@@ -14,7 +14,7 @@ public sealed class GetEventByIdQueryHandler(IGetEventByIdRepository repository)
     {
         ArgumentNullException.ThrowIfNull(query);
 
-        return await repository.GetByIdAsync(query.Id, ct)
+        return await repository.GetByIdAsync(query.CalendarId, query.Id, ct)
             ?? throw new NotFoundException(nameof(CalendarEvent), query.Id);
     }
 }

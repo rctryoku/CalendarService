@@ -1,8 +1,18 @@
+using Calendar.Core.Features.Calendars.Create;
+using Calendar.Core.Features.Calendars.Delete;
+using Calendar.Core.Features.Calendars.GetById;
+using Calendar.Core.Features.Calendars.List;
+using Calendar.Core.Features.Calendars.Rename;
 using Calendar.Core.Features.Events.Create;
 using Calendar.Core.Features.Events.Delete;
 using Calendar.Core.Features.Events.GetById;
 using Calendar.Core.Features.Events.List;
 using Calendar.Core.Features.Events.Update;
+using Calendar.Data.Features.Calendars.Create;
+using Calendar.Data.Features.Calendars.Delete;
+using Calendar.Data.Features.Calendars.GetById;
+using Calendar.Data.Features.Calendars.List;
+using Calendar.Data.Features.Calendars.Rename;
 using Calendar.Data.Features.Events.Create;
 using Calendar.Data.Features.Events.Delete;
 using Calendar.Data.Features.Events.GetById;
@@ -22,12 +32,22 @@ public static class DependencyInjection
 
         services.AddSingleton(new SqliteConnectionFactory(connectionString));
         services.AddSingleton<DatabaseMigrator>();
+        AddCalendarRepositories(services);
         AddEventRepositories(services);
         return services;
     }
 
     public static Task MigrateDatabaseAsync(this IServiceProvider services, CancellationToken cancellationToken) =>
         services.GetRequiredService<DatabaseMigrator>().MigrateAsync(cancellationToken);
+
+    private static void AddCalendarRepositories(IServiceCollection services)
+    {
+        services.AddSingleton<ICreateCalendarRepository, CreateCalendarRepository>();
+        services.AddSingleton<IRenameCalendarRepository, RenameCalendarRepository>();
+        services.AddSingleton<IDeleteCalendarRepository, DeleteCalendarRepository>();
+        services.AddSingleton<IGetCalendarByIdRepository, GetCalendarByIdRepository>();
+        services.AddSingleton<IListCalendarsRepository, ListCalendarsRepository>();
+    }
 
     private static void AddEventRepositories(IServiceCollection services)
     {
