@@ -7,8 +7,8 @@ public sealed class GetEventByIdEndpoint : Endpoint<GetEventByIdRequest, EventRe
 {
     public override void Configure()
     {
-        Get("/api/calendars/{calendarId:guid}/events/{id:guid}");
-        AllowAnonymous();
+        Get("/{id:guid}");
+        Group<EventsGroup>();
     }
 
     public override async Task HandleAsync(GetEventByIdRequest req, CancellationToken ct)

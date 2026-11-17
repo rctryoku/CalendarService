@@ -2,18 +2,18 @@ using FastEndpoints;
 
 namespace Calendar.Api.Features.Events.List;
 
-public sealed class ListEventsEndpoint : Endpoint<ListEventsRequest, IReadOnlyList<EventResponse>>
+public sealed class ListEventsEndpoint : Endpoint<ListEventsRequest, IReadOnlyList<EventOccurrenceResponse>>
 {
     public override void Configure()
     {
-        Get("/api/calendars/{calendarId:guid}/events");
-        AllowAnonymous();
+        Get("/");
+        Group<EventsGroup>();
     }
 
     public override async Task HandleAsync(ListEventsRequest req, CancellationToken ct)
     {
-        var events = await req.ToQuery().ExecuteAsync(ct);
+        var occurrences = await req.ToQuery().ExecuteAsync(ct);
 
-        await Send.OkAsync([.. events.Select(EventResponse.From)], ct);
+        await Send.OkAsync([.. occurrences.Select(EventOccurrenceResponse.From)], ct);
     }
 }

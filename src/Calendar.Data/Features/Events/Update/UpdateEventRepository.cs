@@ -15,7 +15,10 @@ internal sealed class UpdateEventRepository(SqliteConnectionFactory connectionFa
                 Title = @Title,
                 Description = @Description,
                 StartDate = @StartDate,
-                EndDate = @EndDate
+                EndDate = @EndDate,
+                RecurrenceFrequency = @RecurrenceFrequency,
+                RecurrenceInterval = @RecurrenceInterval,
+                RecurrenceCount = @RecurrenceCount
             Where
                 Id = @Id
                 And CalendarId = @CalendarId
@@ -23,7 +26,7 @@ internal sealed class UpdateEventRepository(SqliteConnectionFactory connectionFa
 
         await using var connection = await connectionFactory.OpenAsync(cancellationToken);
         var affectedRows = await connection.ExecuteAsync(
-            new CommandDefinition(sql, calendarEvent, cancellationToken: cancellationToken));
+            new CommandDefinition(sql, EventRow.From(calendarEvent), cancellationToken: cancellationToken));
         return affectedRows > 0;
     }
 }

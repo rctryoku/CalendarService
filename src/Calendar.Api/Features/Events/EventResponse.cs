@@ -8,7 +8,8 @@ public sealed record EventResponse(
     string Title,
     string? Description,
     DateTime StartDate,
-    DateTime EndDate)
+    DateTime EndDate,
+    RecurrenceResponse? Recurrence)
 {
     public static EventResponse From(CalendarEvent calendarEvent) => new(
         calendarEvent.Id,
@@ -16,5 +17,6 @@ public sealed record EventResponse(
         calendarEvent.Title,
         calendarEvent.Description,
         calendarEvent.StartDate,
-        calendarEvent.EndDate);
+        calendarEvent.EndDate,
+        RecurrenceResponse.From(calendarEvent.Recurrence));
 }

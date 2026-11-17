@@ -9,4 +9,6 @@ public interface IEventDetails
     DateTimeOffset StartDate { get; }
 
     DateTimeOffset EndDate { get; }
+
+    RecurrenceRequest? Recurrence { get; }
 }

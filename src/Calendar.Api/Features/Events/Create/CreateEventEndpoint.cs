@@ -7,8 +7,8 @@ public sealed class CreateEventEndpoint : Endpoint<CreateEventRequest, EventResp
 {
     public override void Configure()
     {
-        Post("/api/calendars/{calendarId:guid}/events");
-        AllowAnonymous();
+        Post("/");
+        Group<EventsGroup>();
     }
 
     public override async Task HandleAsync(CreateEventRequest req, CancellationToken ct)

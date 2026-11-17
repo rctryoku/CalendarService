@@ -3,6 +3,8 @@ using System.Net.Http.Json;
 using Calendar.Api.Features.Calendars;
 using Calendar.Api.Features.Events;
 using Calendar.Api.Features.Events.Create;
+using Calendar.Api.Features.Events.List;
+using Calendar.Core.Features.Events.Recurrence;
 using static Calendar.IntegrationTests.HttpClientExtensions;
 
 namespace Calendar.IntegrationTests;
@@ -161,10 +163,9 @@ public sealed class EventsApiTests : IAsyncLifetime, IDisposable
         await CreateAsync(EventRequest("Spans midnight", "2026-11-17T23:00:00Z", "2026-11-18T01:00:00Z"));
         await CreateAsync(EventRequest("After", "2026-11-19T09:00:00Z", "2026-11-19T10:00:00Z"));
 
-        var events = await _client.GetFromJsonAsync<List<EventResponse>>(
-            $"{EventsUrl}?from=2026-11-18T00:00:00Z&to=2026-11-19T00:00:00Z");
+        var events = await ListAsync("2026-11-18T00:00:00Z", "2026-11-19T00:00:00Z");
 
-        Assert.Equal(["Spans midnight", "Late"], events!.Select(e => e.Title));
+        Assert.Equal(["Spans midnight", "Late"], events.Select(e => e.Title));
     }
 
     [Fact]
@@ -175,18 +176,81 @@ public sealed class EventsApiTests : IAsyncLifetime, IDisposable
         await _client.CreateEventAsync(
             otherCalendar.Id, EventRequest("Theirs", "2026-11-18T09:00:00Z", "2026-11-18T10:00:00Z"));
 
-        var events = await _client.GetFromJsonAsync<List<EventResponse>>(EventsUrl);
+        var events = await ListAsync("2026-11-18T00:00:00Z", "2026-11-19T00:00:00Z");
 
-        Assert.Equal(["Mine"], events!.Select(e => e.Title));
+        Assert.Equal(["Mine"], events.Select(e => e.Title));
     }
 
     [Fact]
     public async Task List_UnknownCalendar_Returns404()
     {
-        var response = await _client.GetAsync($"/api/calendars/{Guid.NewGuid()}/events");
+        var response = await _client.GetAsync(
+            $"/api/calendars/{Guid.NewGuid()}/events?from=2026-11-18T00:00:00Z&to=2026-11-19T00:00:00Z");
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("?from=2026-11-18T00:00:00Z")]
+    [InlineData("?from=2026-11-19T00:00:00Z&to=2026-11-18T00:00:00Z")]
+    [InlineData("?from=2026-01-01T00:00:00Z&to=2027-06-01T00:00:00Z")]
+    public async Task List_MissingOrInvalidRange_Returns400(string query)
+    {
+        var response = await _client.GetAsync($"{EventsUrl}{query}");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Create_RecurringEvent_IsReturnedWithItsRule()
+    {
+        var created = await CreateAsync(EventRequest("Standup", "2026-11-16T09:00:00Z", "2026-11-16T09:15:00Z") with
+        {
+            Recurrence = new RecurrenceRequest { Frequency = RecurrenceFrequency.Weekly, Interval = 2, Count = 5 },
+        });
+
+        var fetched = await _client.GetFromJsonAsync<EventResponse>($"{EventsUrl}/{created.Id}");
+
+        Assert.Equal(new RecurrenceResponse(RecurrenceFrequency.Weekly, 2, 5), fetched!.Recurrence);
+    }
+
+    [Fact]
+    public async Task List_DailyEvent_ReturnsOneOccurrencePerDayMixedWithSingleEvents()
+    {
+        await CreateAsync(EventRequest("Standup", "2026-11-16T09:00:00Z", "2026-11-16T09:15:00Z") with
+        {
+            Recurrence = new RecurrenceRequest { Frequency = RecurrenceFrequency.Daily },
+        });
+        await CreateAsync(EventRequest("Lunch", "2026-11-17T12:00:00Z", "2026-11-17T13:00:00Z"));
+
+        var occurrences = await ListAsync("2026-11-16T00:00:00Z", "2026-11-19T00:00:00Z");
+
+        Assert.Equal(["Standup", "Standup", "Lunch", "Standup"], occurrences.Select(o => o.Title));
+        Assert.Equal(
+            new DateTime(2026, 11, 18, 9, 0, 0, DateTimeKind.Utc),
+            occurrences.Last().StartDate);
+        Assert.True(occurrences.Last().IsRecurring);
+    }
+
+    [Fact]
+    public async Task Update_RemovingRecurrence_LeavesSingleEvent()
+    {
+        var created = await CreateAsync(EventRequest("Standup", "2026-11-16T09:00:00Z", "2026-11-16T09:15:00Z") with
+        {
+            Recurrence = new RecurrenceRequest { Frequency = RecurrenceFrequency.Daily },
+        });
+
+        await _client.PutAsJsonAsync(
+            $"{EventsUrl}/{created.Id}", EventRequest("Standup", "2026-11-16T09:00:00Z", "2026-11-16T09:15:00Z"));
+
+        var occurrences = await ListAsync("2026-11-16T00:00:00Z", "2026-11-23T00:00:00Z");
+        var occurrence = Assert.Single(occurrences);
+        Assert.False(occurrence.IsRecurring);
+    }
+
+    private async Task<List<EventOccurrenceResponse>> ListAsync(string from, string to) =>
+        (await _client.GetFromJsonAsync<List<EventOccurrenceResponse>>($"{EventsUrl}?from={from}&to={to}"))!;
 
     private Task<EventResponse> CreateAsync(CreateEventRequest request) =>
         _client.CreateEventAsync(_calendar.Id, request);

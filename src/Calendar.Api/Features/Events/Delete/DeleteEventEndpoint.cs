@@ -7,8 +7,8 @@ public sealed class DeleteEventEndpoint : Endpoint<DeleteEventRequest>
 {
     public override void Configure()
     {
-        Delete("/api/calendars/{calendarId:guid}/events/{id:guid}");
-        AllowAnonymous();
+        Delete("/{id:guid}");
+        Group<EventsGroup>();
     }
 
     public override async Task HandleAsync(DeleteEventRequest req, CancellationToken ct)

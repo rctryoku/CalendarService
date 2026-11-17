@@ -1,5 +1,6 @@
 using Calendar.Core.Exceptions;
 using Calendar.Core.Features.Events;
+using Calendar.Core.Features.Events.Recurrence;
 using Calendar.Core.Features.Events.Update;
 using FastEndpoints;
 
@@ -11,7 +12,8 @@ public sealed record UpdateEventCommand(
     string Title,
     string? Description,
     DateTime StartDate,
-    DateTime EndDate) : ICommand<CalendarEvent>;
+    DateTime EndDate,
+    RecurrenceRule? Recurrence) : ICommand<CalendarEvent>;
 
 public sealed class UpdateEventCommandHandler(IUpdateEventRepository repository)
     : ICommandHandler<UpdateEventCommand, CalendarEvent>
@@ -26,7 +28,8 @@ public sealed class UpdateEventCommandHandler(IUpdateEventRepository repository)
             command.Title,
             command.Description,
             command.StartDate,
-            command.EndDate);
+            command.EndDate,
+            command.Recurrence);
 
         var updated = await repository.UpdateAsync(calendarEvent, ct);
         if (!updated)

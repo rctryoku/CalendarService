@@ -1,6 +1,7 @@
 using Calendar.Api.Features.Events;
 using Calendar.Api.Features.Events.Create;
 using Calendar.Core.Features.Events;
+using Calendar.Core.Features.Events.Recurrence;
 
 namespace Calendar.UnitTests.Features.Events;
 
@@ -84,6 +85,57 @@ public sealed class EventDetailsValidatorTests
         Assert.Contains(result.Errors, error => error.PropertyName == nameof(IEventDetails.StartDate));
         Assert.Contains(result.Errors, error => error.PropertyName == nameof(IEventDetails.EndDate));
     }
+
+    [Fact]
+    public void Validate_ValidRecurrence_HasNoErrors()
+    {
+        var result = _validator.Validate(Event() with { Recurrence = Weekly() with { Count = 10 } });
+
+        Assert.True(result.IsValid);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(RecurrenceRule.MaxInterval + 1)]
+    public void Validate_IntervalOutOfRange_HasError(int interval)
+    {
+        var result = _validator.Validate(Event() with { Recurrence = Weekly() with { Interval = interval } });
+
+        Assert.False(result.IsValid);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(3)]
+    public void Validate_UnknownFrequency_HasError(int frequency)
+    {
+        var result = _validator.Validate(Event() with { Recurrence = Weekly() with { Frequency = (RecurrenceFrequency)frequency } });
+
+        Assert.False(result.IsValid);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(RecurrenceRule.MaxCount + 1)]
+    public void Validate_CountOutOfRange_HasError(int count)
+    {
+        var result = _validator.Validate(Event() with { Recurrence = Weekly() with { Count = count } });
+
+        Assert.False(result.IsValid);
+    }
+
+    [Fact]
+    public void Validate_OccurrenceLongerThanInterval_HasError()
+    {
+        var twoDayEvent = Event() with { EndDate = Nine.AddDays(2), Recurrence = Weekly() with { Frequency = RecurrenceFrequency.Daily } };
+
+        var result = _validator.Validate(twoDayEvent);
+
+        var error = Assert.Single(result.Errors);
+        Assert.Equal("Each occurrence must end before the next one starts.", error.ErrorMessage);
+    }
+
+    private static RecurrenceRequest Weekly() => new() { Frequency = RecurrenceFrequency.Weekly };
 
     private static CreateEventRequest Event() => new()
     {

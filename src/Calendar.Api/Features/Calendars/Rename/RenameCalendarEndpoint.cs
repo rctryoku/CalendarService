@@ -6,8 +6,8 @@ public sealed class RenameCalendarEndpoint : Endpoint<RenameCalendarRequest, Cal
 {
     public override void Configure()
     {
-        Put("/api/calendars/{id:guid}");
-        AllowAnonymous();
+        Put("/{id:guid}");
+        Group<CalendarsGroup>();
     }
 
     public override async Task HandleAsync(RenameCalendarRequest req, CancellationToken ct)

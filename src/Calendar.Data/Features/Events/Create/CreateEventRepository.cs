@@ -16,7 +16,10 @@ internal sealed class CreateEventRepository(SqliteConnectionFactory connectionFa
                 Title,
                 Description,
                 StartDate,
-                EndDate
+                EndDate,
+                RecurrenceFrequency,
+                RecurrenceInterval,
+                RecurrenceCount
             )
             Values
             (
@@ -25,11 +28,15 @@ internal sealed class CreateEventRepository(SqliteConnectionFactory connectionFa
                 @Title,
                 @Description,
                 @StartDate,
-                @EndDate
+                @EndDate,
+                @RecurrenceFrequency,
+                @RecurrenceInterval,
+                @RecurrenceCount
             )
             """;
 
         await using var connection = await connectionFactory.OpenAsync(cancellationToken);
-        await connection.ExecuteAsync(new CommandDefinition(sql, calendarEvent, cancellationToken: cancellationToken));
+        await connection.ExecuteAsync(
+            new CommandDefinition(sql, EventRow.From(calendarEvent), cancellationToken: cancellationToken));
     }
 }

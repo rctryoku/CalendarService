@@ -33,7 +33,22 @@ Content-Type: application/json
   "endDate": "2026-11-18T09:15:00+01:00"
 }
 
-### List events in a time range
+### Create a weekly meeting (every Monday, 10 times)
+POST {{host}}/api/calendars/{{calendar.response.body.$.id}}/events
+Content-Type: application/json
+
+{
+  "title": "Team meeting",
+  "startDate": "2026-11-16T10:00:00+01:00",
+  "endDate": "2026-11-16T11:00:00+01:00",
+  "recurrence": {
+    "frequency": 2,
+    "interval": 1,
+    "count": 10
+  }
+}
+
+### List events in a time range (recurring events appear once per occurrence)
 GET {{host}}/api/calendars/{{calendar.response.body.$.id}}/events?from=2026-11-18T00:00:00Z&to=2026-11-19T00:00:00Z
 
 ### Get the event

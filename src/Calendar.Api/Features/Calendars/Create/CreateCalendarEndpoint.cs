@@ -7,8 +7,8 @@ public sealed class CreateCalendarEndpoint : Endpoint<CreateCalendarRequest, Cal
 {
     public override void Configure()
     {
-        Post("/api/calendars");
-        AllowAnonymous();
+        Post("/");
+        Group<CalendarsGroup>();
     }
 
     public override async Task HandleAsync(CreateCalendarRequest req, CancellationToken ct)

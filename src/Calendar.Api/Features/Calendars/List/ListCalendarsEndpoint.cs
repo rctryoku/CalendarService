@@ -6,8 +6,8 @@ public sealed class ListCalendarsEndpoint : Endpoint<ListCalendarsRequest, IRead
 {
     public override void Configure()
     {
-        Get("/api/calendars");
-        AllowAnonymous();
+        Get("/");
+        Group<CalendarsGroup>();
     }
 
     public override async Task HandleAsync(ListCalendarsRequest req, CancellationToken ct)

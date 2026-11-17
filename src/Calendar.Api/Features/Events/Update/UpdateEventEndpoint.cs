@@ -6,8 +6,8 @@ public sealed class UpdateEventEndpoint : Endpoint<UpdateEventRequest, EventResp
 {
     public override void Configure()
     {
-        Put("/api/calendars/{calendarId:guid}/events/{id:guid}");
-        AllowAnonymous();
+        Put("/{id:guid}");
+        Group<EventsGroup>();
     }
 
     public override async Task HandleAsync(UpdateEventRequest req, CancellationToken ct)

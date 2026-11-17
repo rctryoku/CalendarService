@@ -7,8 +7,8 @@ public sealed class GetCalendarByIdEndpoint : Endpoint<GetCalendarByIdRequest, C
 {
     public override void Configure()
     {
-        Get("/api/calendars/{id:guid}");
-        AllowAnonymous();
+        Get("/{id:guid}");
+        Group<CalendarsGroup>();
     }
 
     public override async Task HandleAsync(GetCalendarByIdRequest req, CancellationToken ct)

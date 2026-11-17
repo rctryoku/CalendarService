@@ -70,6 +70,12 @@ Features so far: `Calendars` (entity `UserCalendar`) and `Events` (entity `Calen
 calendar: routes are `/api/calendars/{calendarId}/events[/{id}]`). The entity is not called `Calendar`
 because that would clash with the root namespace `Calendar`.
 
+Recurrence (`Core/Features/Events/Recurrence/`): an event has an optional `RecurrenceRule`
+(Frequency `1 = Daily` / `2 = Weekly`, Interval, optional Count; no Count repeats forever). Occurrences are never stored; `EventOccurrences.Between(event, from, to)`
+expands them at query time, so listing events requires `from` and `to` (max 366 days) and returns
+occurrences (`EventOccurrenceResponse`). Anything that asks "is this busy?" must go through
+`EventOccurrences`, never through `StartDate`/`EndDate` alone.
+
 ### Layer rules
 
 - **Core**: entities are plain positional `record`s (`CalendarEvent(Guid Id, string Title, ...)`) with no
@@ -82,7 +88,11 @@ because that would clash with the root namespace `Calendar`.
   Missing entities throw `NotFoundException`, booking clashes throw `ConflictException`.
 - **Data**: Dapper with hand-written SQL. One repository class per use case, mirroring Core's interfaces,
   a connection per operation via `SqliteConnectionFactory`. SQL is a `var sql = """..."""` local in the method.
-  Column names match the C# property names, so no aliases are needed.
+  Column names match the C# property names, so no aliases are needed. When the table shape differs from the
+  entity (e.g. the recurrence rule flattened into nullable columns), map through an internal row class
+  (`EventRow` with `From(entity)` / `ToCalendarEvent()`) instead of fighting Dapper's constructor mapping.
+  Enums have explicit values starting at 1 (so a missing value, 0, is invalid). They are stored and sent
+  as those numbers: `Integer` column + `Check (... In (1, 2))`, plain numbers in JSON.
   Exposes `AddData(connectionString)` and `MigrateDatabaseAsync()`.
 
 ### Database migrations
@@ -116,7 +126,10 @@ Order By
 ```
 
 Parameters are PascalCase and match property names (`@Id`, `@StartDate`); pass `new { Id = id }`.
-- **Api**: one FastEndpoints endpoint class per route. An endpoint maps its request to a command
+- **Api**: one FastEndpoints endpoint class per route. Every feature has a `XxxGroup : Group` (e.g.
+  `EventsGroup`) holding its route prefix, `AllowAnonymous()` and Swagger tag; endpoints call
+  `Group<XxxGroup>()` and only declare the rest of the route (`Get("/{id:guid}")`). Swagger groups by
+  these tags (auto-tagging is off). An endpoint maps its request to a command
   (`request.ToCommand()`), executes it and sends the response. No business logic in endpoints.
   **All input rules live in validators** (FastEndpoints `Validator<TRequest>`, i.e. FluentValidation):
   required fields, lengths, `EndDate` after `StartDate`. Rules shared by several requests go in one

@@ -1,3 +1,5 @@
+using Calendar.Core.Features.Events.Recurrence;
+
 namespace Calendar.Core.Features.Events;
 
 public sealed record CalendarEvent(
@@ -6,7 +8,8 @@ public sealed record CalendarEvent(
     string Title,
     string? Description,
     DateTime StartDate,
-    DateTime EndDate)
+    DateTime EndDate,
+    RecurrenceRule? Recurrence)
 {
     public const int TitleMaxLength = 200;
     public const int DescriptionMaxLength = 2000;

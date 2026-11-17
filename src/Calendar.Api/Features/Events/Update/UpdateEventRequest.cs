@@ -16,6 +16,8 @@ public sealed record UpdateEventRequest : IEventDetails
 
     public DateTimeOffset EndDate { get; init; }
 
-    public UpdateEventCommand ToCommand() =>
-        new(CalendarId, Id, Title, Description, StartDate.UtcDateTime, EndDate.UtcDateTime);
+    public RecurrenceRequest? Recurrence { get; init; }
+
+    public UpdateEventCommand ToCommand() => new(
+        CalendarId, Id, Title, Description, StartDate.UtcDateTime, EndDate.UtcDateTime, Recurrence?.ToRule());
 }

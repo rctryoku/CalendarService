@@ -15,7 +15,10 @@ internal sealed class GetEventByIdRepository(SqliteConnectionFactory connectionF
                 Title,
                 Description,
                 StartDate,
-                EndDate
+                EndDate,
+                RecurrenceFrequency,
+                RecurrenceInterval,
+                RecurrenceCount
             From
                 Events
             Where
@@ -24,7 +27,8 @@ internal sealed class GetEventByIdRepository(SqliteConnectionFactory connectionF
             """;
 
         await using var connection = await connectionFactory.OpenAsync(cancellationToken);
-        return await connection.QuerySingleOrDefaultAsync<CalendarEvent>(new CommandDefinition(
+        var row = await connection.QuerySingleOrDefaultAsync<EventRow>(new CommandDefinition(
             sql, new { Id = id, CalendarId = calendarId }, cancellationToken: cancellationToken));
+        return row?.ToCalendarEvent();
     }
 }

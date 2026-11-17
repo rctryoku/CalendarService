@@ -12,7 +12,12 @@ var connectionString = builder.Configuration.GetConnectionString("Calendar")
 builder.Services
     .AddData(connectionString)
     .AddFastEndpoints(options => options.Assemblies = [typeof(CreateEventCommandHandler).Assembly])
-    .SwaggerDocument(options => options.DocumentSettings = settings => settings.Title = "Calendar API")
+    .SwaggerDocument(options =>
+    {
+        options.ShortSchemaNames = true;
+        options.AutoTagPathSegmentIndex = 0;
+        options.DocumentSettings = settings => settings.Title = "Calendar API";
+    })
     .AddProblemDetails()
     .AddExceptionHandler<ProblemDetailsExceptionHandler>();
 
