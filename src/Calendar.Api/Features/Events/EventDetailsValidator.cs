@@ -16,6 +16,13 @@ public sealed class EventDetailsValidator : AbstractValidator<IEventDetails>
             .GreaterThan(details => details.StartDate)
             .WithMessage("EndDate must be after StartDate.");
 
+        RuleFor(details => details.ResourceIds)
+            .Cascade(CascadeMode.Stop)
+            .NotNull()
+            .Must(ids => ids.Distinct().Count() == ids.Count)
+            .WithMessage("ResourceIds must not contain duplicates.");
+        RuleForEach(details => details.ResourceIds).NotEmpty();
+
         When(details => details.Recurrence is not null, AddRecurrenceRules);
     }
 

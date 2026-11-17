@@ -16,6 +16,8 @@ public sealed record CreateEventRequest : IEventDetails
 
     public RecurrenceRequest? Recurrence { get; init; }
 
+    public IReadOnlyList<Guid> ResourceIds { get; init; } = [];
+
     public CreateEventCommand ToCommand() => new(
-        CalendarId, Title, Description, StartDate.UtcDateTime, EndDate.UtcDateTime, Recurrence?.ToRule());
+        CalendarId, Title, Description, StartDate.UtcDateTime, EndDate.UtcDateTime, Recurrence?.ToRule(), ResourceIds);
 }

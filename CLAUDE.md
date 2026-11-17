@@ -66,7 +66,7 @@ Calendar.Data/Features/Events/Create/CreateEventRepository.cs
 Every use case has the same folder name (`Create`, `Update`, `Delete`, `GetById`, `List`, or an
 intention-revealing verb such as `Rename`) in every project.
 
-Features so far: `Calendars` (entity `UserCalendar`) and `Events` (entity `CalendarEvent`, always inside a
+Features so far: `Calendars` (entity `UserCalendar`), `Resources` (entity `Resource`) and `Events` (entity `CalendarEvent`, always inside a
 calendar: routes are `/api/calendars/{calendarId}/events[/{id}]`). The entity is not called `Calendar`
 because that would clash with the root namespace `Calendar`.
 
@@ -75,6 +75,13 @@ Recurrence (`Core/Features/Events/Recurrence/`): an event has an optional `Recur
 expands them at query time, so listing events requires `from` and `to` (max 366 days) and returns
 occurrences (`EventOccurrenceResponse`). Anything that asks "is this busy?" must go through
 `EventOccurrences`, never through `StartDate`/`EndDate` alone.
+
+Resources (`Resource`, e.g. meeting rooms) are global, not owned by a calendar (`/api/resources`). An event
+books them through `ResourceIds` (link table `EventResources`). Create and Update event call
+`EnsureResourcesAreFreeAsync`, which loads other bookings of the same resources in **any** calendar
+(`IResourceBookingRepository`) and runs the pure `BookingConflicts.FindFirst`; a clash throws
+`ConflictException` (409). The check covers the event's whole series, or `BookingConflicts.OpenEndedHorizon`
+(366 days) for a series without a count.
 
 ### Layer rules
 

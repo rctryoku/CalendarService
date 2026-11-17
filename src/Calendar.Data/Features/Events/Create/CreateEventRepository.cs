@@ -36,7 +36,11 @@ internal sealed class CreateEventRepository(SqliteConnectionFactory connectionFa
             """;
 
         await using var connection = await connectionFactory.OpenAsync(cancellationToken);
+        await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
         await connection.ExecuteAsync(
-            new CommandDefinition(sql, EventRow.From(calendarEvent), cancellationToken: cancellationToken));
+            new CommandDefinition(sql, EventRow.From(calendarEvent), transaction, cancellationToken: cancellationToken));
+        await EventResourceLinks.ReplaceAsync(
+            connection, transaction, calendarEvent.Id, calendarEvent.ResourceIds, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
     }
 }

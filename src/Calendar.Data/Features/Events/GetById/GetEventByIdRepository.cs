@@ -29,6 +29,10 @@ internal sealed class GetEventByIdRepository(SqliteConnectionFactory connectionF
         await using var connection = await connectionFactory.OpenAsync(cancellationToken);
         var row = await connection.QuerySingleOrDefaultAsync<EventRow>(new CommandDefinition(
             sql, new { Id = id, CalendarId = calendarId }, cancellationToken: cancellationToken));
-        return row?.ToCalendarEvent();
+        if (row is null)
+            return null;
+
+        var events = await EventResourceLinks.WithResourcesAsync(connection, [row], cancellationToken);
+        return events[0];
     }
 }

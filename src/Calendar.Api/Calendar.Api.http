@@ -1,6 +1,11 @@
+# Send the requests one by one, from top to bottom ("Send Request" above each one).
+# Later requests reuse ids from earlier responses ({{calendar.response.body.$.id}}), so a request only
+# works once the request it refers to has been sent in this VS Code session.
+# The last section deletes everything again. To start from an empty database: tools\run.cmd -Reset
+
 @host = http://localhost:5055
 
-### Create a calendar
+### 1. Create a calendar for rene
 # @name calendar
 POST {{host}}/api/calendars
 Content-Type: application/json
@@ -10,10 +15,20 @@ Content-Type: application/json
   "owner": "rene"
 }
 
-### List calendars for an owner
+### 2. Create a calendar for alice
+# @name aliceCalendar
+POST {{host}}/api/calendars
+Content-Type: application/json
+
+{
+  "name": "Work",
+  "owner": "alice"
+}
+
+### 3. List rene's calendars
 GET {{host}}/api/calendars?owner=rene
 
-### Rename the calendar
+### 4. Rename rene's calendar
 PUT {{host}}/api/calendars/{{calendar.response.body.$.id}}
 Content-Type: application/json
 
@@ -21,8 +36,20 @@ Content-Type: application/json
   "name": "Job"
 }
 
-### Create an event in the calendar
-# @name created
+### 5. Create a meeting room (shared by all calendars)
+# @name room
+POST {{host}}/api/resources
+Content-Type: application/json
+
+{
+  "name": "Meeting room 1"
+}
+
+### 6. List meeting rooms
+GET {{host}}/api/resources
+
+### 7. Create a single event in rene's calendar
+# @name standup
 POST {{host}}/api/calendars/{{calendar.response.body.$.id}}/events
 Content-Type: application/json
 
@@ -33,29 +60,52 @@ Content-Type: application/json
   "endDate": "2026-11-18T09:15:00+01:00"
 }
 
-### Create a weekly meeting (every Monday, 10 times)
+### 8. Create a weekly meeting (every Wednesday, 10 times) that books the room
 POST {{host}}/api/calendars/{{calendar.response.body.$.id}}/events
 Content-Type: application/json
 
 {
-  "title": "Team meeting",
-  "startDate": "2026-11-16T10:00:00+01:00",
-  "endDate": "2026-11-16T11:00:00+01:00",
+  "title": "Planning",
+  "startDate": "2026-11-18T13:00:00+01:00",
+  "endDate": "2026-11-18T14:00:00+01:00",
   "recurrence": {
     "frequency": 2,
     "interval": 1,
     "count": 10
-  }
+  },
+  "resourceIds": ["{{room.response.body.$.id}}"]
 }
 
-### List events in a time range (recurring events appear once per occurrence)
-GET {{host}}/api/calendars/{{calendar.response.body.$.id}}/events?from=2026-11-18T00:00:00Z&to=2026-11-19T00:00:00Z
+### 9. alice books the same room on a Wednesday three weeks later: 409 Conflict
+POST {{host}}/api/calendars/{{aliceCalendar.response.body.$.id}}/events
+Content-Type: application/json
 
-### Get the event
-GET {{host}}/api/calendars/{{calendar.response.body.$.id}}/events/{{created.response.body.$.id}}
+{
+  "title": "Interview",
+  "startDate": "2026-12-09T13:30:00+01:00",
+  "endDate": "2026-12-09T14:30:00+01:00",
+  "resourceIds": ["{{room.response.body.$.id}}"]
+}
 
-### Move the event
-PUT {{host}}/api/calendars/{{calendar.response.body.$.id}}/events/{{created.response.body.$.id}}
+### 10. alice books the room on the Thursday instead: 201 Created
+POST {{host}}/api/calendars/{{aliceCalendar.response.body.$.id}}/events
+Content-Type: application/json
+
+{
+  "title": "Interview",
+  "startDate": "2026-12-10T13:30:00+01:00",
+  "endDate": "2026-12-10T14:30:00+01:00",
+  "resourceIds": ["{{room.response.body.$.id}}"]
+}
+
+### 11. List rene's events in a week (the weekly meeting appears once per occurrence)
+GET {{host}}/api/calendars/{{calendar.response.body.$.id}}/events?from=2026-11-16T00:00:00Z&to=2026-11-23T00:00:00Z
+
+### 12. Get the standup
+GET {{host}}/api/calendars/{{calendar.response.body.$.id}}/events/{{standup.response.body.$.id}}
+
+### 13. Move the standup
+PUT {{host}}/api/calendars/{{calendar.response.body.$.id}}/events/{{standup.response.body.$.id}}
 Content-Type: application/json
 
 {
@@ -64,8 +114,14 @@ Content-Type: application/json
   "endDate": "2026-11-18T10:15:00+01:00"
 }
 
-### Delete the event
-DELETE {{host}}/api/calendars/{{calendar.response.body.$.id}}/events/{{created.response.body.$.id}}
+### 14. Clean up: delete the standup
+DELETE {{host}}/api/calendars/{{calendar.response.body.$.id}}/events/{{standup.response.body.$.id}}
 
-### Delete the calendar (also deletes its events)
+### 15. Clean up: delete the room (also removes its bookings)
+DELETE {{host}}/api/resources/{{room.response.body.$.id}}
+
+### 16. Clean up: delete rene's calendar (also deletes its events)
 DELETE {{host}}/api/calendars/{{calendar.response.body.$.id}}
+
+### 17. Clean up: delete alice's calendar
+DELETE {{host}}/api/calendars/{{aliceCalendar.response.body.$.id}}

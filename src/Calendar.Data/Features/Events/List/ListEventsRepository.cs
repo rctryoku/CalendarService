@@ -33,6 +33,6 @@ internal sealed class ListEventsRepository(SqliteConnectionFactory connectionFac
             sql,
             new { CalendarId = calendarId, RangeStart = rangeStart, RangeEnd = rangeEnd },
             cancellationToken: cancellationToken));
-        return [.. rows.Select(row => row.ToCalendarEvent())];
+        return await EventResourceLinks.WithResourcesAsync(connection, rows, cancellationToken);
     }
 }

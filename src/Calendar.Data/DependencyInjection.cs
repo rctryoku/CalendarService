@@ -3,21 +3,33 @@ using Calendar.Core.Features.Calendars.Delete;
 using Calendar.Core.Features.Calendars.GetById;
 using Calendar.Core.Features.Calendars.List;
 using Calendar.Core.Features.Calendars.Rename;
+using Calendar.Core.Features.Events.Bookings;
 using Calendar.Core.Features.Events.Create;
 using Calendar.Core.Features.Events.Delete;
 using Calendar.Core.Features.Events.GetById;
 using Calendar.Core.Features.Events.List;
 using Calendar.Core.Features.Events.Update;
+using Calendar.Core.Features.Resources.Create;
+using Calendar.Core.Features.Resources.Delete;
+using Calendar.Core.Features.Resources.GetById;
+using Calendar.Core.Features.Resources.List;
+using Calendar.Core.Features.Resources.Rename;
 using Calendar.Data.Features.Calendars.Create;
 using Calendar.Data.Features.Calendars.Delete;
 using Calendar.Data.Features.Calendars.GetById;
 using Calendar.Data.Features.Calendars.List;
 using Calendar.Data.Features.Calendars.Rename;
+using Calendar.Data.Features.Events.Bookings;
 using Calendar.Data.Features.Events.Create;
 using Calendar.Data.Features.Events.Delete;
 using Calendar.Data.Features.Events.GetById;
 using Calendar.Data.Features.Events.List;
 using Calendar.Data.Features.Events.Update;
+using Calendar.Data.Features.Resources.Create;
+using Calendar.Data.Features.Resources.Delete;
+using Calendar.Data.Features.Resources.GetById;
+using Calendar.Data.Features.Resources.List;
+using Calendar.Data.Features.Resources.Rename;
 using Calendar.Data.TypeHandlers;
 using Dapper;
 using Microsoft.Extensions.DependencyInjection;
@@ -34,6 +46,7 @@ public static class DependencyInjection
         services.AddSingleton<DatabaseMigrator>();
         AddCalendarRepositories(services);
         AddEventRepositories(services);
+        AddResourceRepositories(services);
         return services;
     }
 
@@ -56,6 +69,16 @@ public static class DependencyInjection
         services.AddSingleton<IDeleteEventRepository, DeleteEventRepository>();
         services.AddSingleton<IGetEventByIdRepository, GetEventByIdRepository>();
         services.AddSingleton<IListEventsRepository, ListEventsRepository>();
+        services.AddSingleton<IResourceBookingRepository, ResourceBookingRepository>();
+    }
+
+    private static void AddResourceRepositories(IServiceCollection services)
+    {
+        services.AddSingleton<ICreateResourceRepository, CreateResourceRepository>();
+        services.AddSingleton<IRenameResourceRepository, RenameResourceRepository>();
+        services.AddSingleton<IDeleteResourceRepository, DeleteResourceRepository>();
+        services.AddSingleton<IGetResourceByIdRepository, GetResourceByIdRepository>();
+        services.AddSingleton<IListResourcesRepository, ListResourcesRepository>();
     }
 
     private static void RegisterTypeHandlers()

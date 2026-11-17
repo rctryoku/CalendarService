@@ -5,6 +5,8 @@ using Calendar.Api.Features.Calendars;
 using Calendar.Api.Features.Calendars.Create;
 using Calendar.Api.Features.Events;
 using Calendar.Api.Features.Events.Create;
+using Calendar.Api.Features.Resources;
+using Calendar.Api.Features.Resources.Create;
 
 namespace Calendar.IntegrationTests;
 
@@ -17,6 +19,13 @@ internal static class HttpClientExtensions
             "/api/calendars", new CreateCalendarRequest { Name = name, Owner = owner });
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         return (await response.Content.ReadFromJsonAsync<CalendarResponse>())!;
+    }
+
+    public static async Task<ResourceResponse> CreateResourceAsync(this HttpClient client, string name = "Meeting room 1")
+    {
+        var response = await client.PostAsJsonAsync("/api/resources", new CreateResourceRequest { Name = name });
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        return (await response.Content.ReadFromJsonAsync<ResourceResponse>())!;
     }
 
     public static async Task<EventResponse> CreateEventAsync(

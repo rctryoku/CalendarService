@@ -9,7 +9,8 @@ public sealed record CalendarEvent(
     string? Description,
     DateTime StartDate,
     DateTime EndDate,
-    RecurrenceRule? Recurrence)
+    RecurrenceRule? Recurrence,
+    IReadOnlyList<Guid> ResourceIds)
 {
     public const int TitleMaxLength = 200;
     public const int DescriptionMaxLength = 2000;

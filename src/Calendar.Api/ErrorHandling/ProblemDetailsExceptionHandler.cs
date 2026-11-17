@@ -24,6 +24,7 @@ internal sealed class ProblemDetailsExceptionHandler(IProblemDetailsService prob
     private static int? ToStatusCode(Exception exception) => exception switch
     {
         NotFoundException => StatusCodes.Status404NotFound,
+        ConflictException => StatusCodes.Status409Conflict,
         _ => null,
     };
 }

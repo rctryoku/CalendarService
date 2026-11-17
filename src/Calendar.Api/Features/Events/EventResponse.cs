@@ -9,7 +9,8 @@ public sealed record EventResponse(
     string? Description,
     DateTime StartDate,
     DateTime EndDate,
-    RecurrenceResponse? Recurrence)
+    RecurrenceResponse? Recurrence,
+    IReadOnlyList<Guid> ResourceIds)
 {
     public static EventResponse From(CalendarEvent calendarEvent) => new(
         calendarEvent.Id,
@@ -18,5 +19,6 @@ public sealed record EventResponse(
         calendarEvent.Description,
         calendarEvent.StartDate,
         calendarEvent.EndDate,
-        RecurrenceResponse.From(calendarEvent.Recurrence));
+        RecurrenceResponse.From(calendarEvent.Recurrence),
+        calendarEvent.ResourceIds);
 }

@@ -37,8 +37,8 @@ internal sealed class EventRow
         RecurrenceCount = calendarEvent.Recurrence?.Count,
     };
 
-    public CalendarEvent ToCalendarEvent() =>
-        new(Id, CalendarId, Title, Description, StartDate, EndDate, ToRecurrenceRule());
+    public CalendarEvent ToCalendarEvent(IReadOnlyList<Guid> resourceIds) =>
+        new(Id, CalendarId, Title, Description, StartDate, EndDate, ToRecurrenceRule(), resourceIds);
 
     private RecurrenceRule? ToRecurrenceRule()
     {

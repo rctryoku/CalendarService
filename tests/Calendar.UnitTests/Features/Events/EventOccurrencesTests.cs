@@ -124,7 +124,7 @@ public sealed class EventOccurrencesTests
     }
 
     private static CalendarEvent Event(DateTime startDate, int hours, RecurrenceRule? recurrence = null) =>
-        new(Guid.NewGuid(), Guid.NewGuid(), "Standup", null, startDate, startDate.AddHours(hours), recurrence);
+        new(Guid.NewGuid(), Guid.NewGuid(), "Standup", null, startDate, startDate.AddHours(hours), recurrence, []);
 
     private static RecurrenceRule Rule(RecurrenceFrequency frequency, int interval = 1, int? count = null) =>
         new(frequency, interval, count);

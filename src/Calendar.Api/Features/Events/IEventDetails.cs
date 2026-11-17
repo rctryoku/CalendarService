@@ -11,4 +11,6 @@ public interface IEventDetails
     DateTimeOffset EndDate { get; }
 
     RecurrenceRequest? Recurrence { get; }
+
+    IReadOnlyList<Guid> ResourceIds { get; }
 }

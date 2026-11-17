@@ -9,7 +9,8 @@ public sealed record EventOccurrenceResponse(
     string? Description,
     DateTime StartDate,
     DateTime EndDate,
-    bool IsRecurring)
+    bool IsRecurring,
+    IReadOnlyList<Guid> ResourceIds)
 {
     public static EventOccurrenceResponse From(EventOccurrence occurrence) => new(
         occurrence.CalendarEvent.Id,
@@ -18,5 +19,6 @@ public sealed record EventOccurrenceResponse(
         occurrence.CalendarEvent.Description,
         occurrence.StartDate,
         occurrence.EndDate,
-        occurrence.CalendarEvent.Recurrence is not null);
+        occurrence.CalendarEvent.Recurrence is not null,
+        occurrence.CalendarEvent.ResourceIds);
 }
