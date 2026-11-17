@@ -90,10 +90,8 @@ response. The handler holds the use case. The repository holds one SQL statement
 **Why these choices**
 
 - **FastEndpoints** gives one class per endpoint, typed requests and responses, FluentValidation and
-  a command bus out of the box. That's the structure I want, without MediatR or controllers that grow
-  into service classes.
-- **Dapper with hand-written SQL** keeps the queries visible and easy to review. The date and booking
-  queries are the interesting part of this domain, so I didn't want an ORM to hide them.
+  a command bus out of the box. 
+- **Dapper with hand-written SQL** keeps the queries visible and easy to review.
 - **Plain SQL migration scripts** (`Calendar.Data/Migrations/`) can be read, reviewed and run by hand
   in any SQLite tool. A small migrator runs pending scripts once each at startup. Migration `0003`
   shows a real schema change on existing data (events moved into a default calendar).
